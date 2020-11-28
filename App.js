@@ -1,21 +1,32 @@
-import { StatusBar } from 'expo-status-bar';
-import React from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import React, { Component } from 'react';
+import { StyleSheet, Text, View, Image } from 'react-native';
+import * as Font from 'expo-font'
+import AppNavigator from './navigations/Navigator'
+import {AppLoading} from 'expo'
 
-export default function App() {
-  return (
-    <View style={styles.container}>
-      <Text>Open up App.js to start working on your app!</Text>
-      <StatusBar style="auto" />
-    </View>
-  );
+export default class App extends Component {
+  state = {
+    fontLoaded: false
+  }
+  async componentDidMount() {
+    Font.loadAsync({
+      'UTMAvo': require('./assets/Fonts/UTMAVO.TTF'),
+      'UTMAvoBold': require('./assets/Fonts/UTMAVOBOLD.TTF'),
+    })
+    this.setState({fontLoaded: true})
+  }
+  render() {
+    return (
+      (this.state.fontLoaded==false)?(<AppLoading />):(<AppNavigator />)
+    );
+  }
 }
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
     backgroundColor: '#fff',
     alignItems: 'center',
-    justifyContent: 'center',
+    height: "100%",
+    width: "100%"
   },
 });
