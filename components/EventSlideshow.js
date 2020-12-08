@@ -1,7 +1,10 @@
 import React, {Component} from 'react'
+import { Dimensions } from 'react-native';
 import Slideshow from 'react-native-slideshow'
+import DOMAIN from '../domain'
+import { withNavigation } from 'react-navigation';
 
-export default class EventSlideshow extends Component {
+class EventSlideshow extends Component {
     constructor(props) {
       super(props);
    
@@ -10,55 +13,66 @@ export default class EventSlideshow extends Component {
         interval: null,
         dataSource: [
           {
-            title: 'Title 1',
-            caption: 'Caption 1',
+            title: '',
+            caption: '',
             url: 'http://placeimg.com/640/480/any',
           }, {
-            title: 'Title 2',
-            caption: 'Caption 2',
+            title: '',
+            caption: '',
             url: 'http://placeimg.com/640/480/any',
           }, {
-            title: 'Title 3',
-            caption: 'Caption 3',
+            title: '',
+            caption: '',
             url: 'http://placeimg.com/640/480/any',
           },
         ],
+        events: []
       };
     }
 
     componentDidMount() {
-        fetch('http://localhost:3000/event/all', {method: 'GET'}).then(res => res.json())
+        fetch(`${DOMAIN.api}/event/all`, {method: 'GET'}).then(res => res.json())
           .then(data => {
+            this.setState({events:data})
             data=data.slice(0,4).map(e => {
+                if(e.image.indexOf('http')==-1) {
+                  e.image=(`${DOMAIN.api}/`+e.image).replace('\\','/')
+                }
                 return({
                     title: e.name,
-                    url: e.image.indexOf('http')==-1?('http://localhost:3000/'+e.image).replaceAll('\\','/'):e.image
+                    url: e.image
                 })
             })
             this.setState({dataSource:data})
           })
     }
    
-    componentWillMount() {
+    UNSAFE_componentWillMount() {
       this.setState({
         interval: setInterval(() => {
           this.setState({
-            position: this.state.position === this.state.dataSource.length ? 0 : this.state.position + 1
+            position: (this.state.position === this.state.dataSource.length ? 0 : this.state.position + 1)
           });
         }, 2000)
       });
     }
    
-    componentWillUnmount() {
+    UNSAFE_componentWillUnmount() {
       clearInterval(this.state.interval);
     }
    
     render() {
       return (
       <Slideshow 
+          height={Dimensions.get('window').width/16*9}
           dataSource={this.state.dataSource}
           position={this.state.position}
+          onPress={position => {
+            this.props.navigation.navigate('DetailEvent',{event:this.state.events[position.index].slug})
+          }}
           onPositionChanged={position => this.setState({ position })} />
       );
     }
   }
+
+  export default withNavigation(EventSlideshow)

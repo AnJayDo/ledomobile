@@ -5,18 +5,15 @@ import { withNavigation } from 'react-navigation';
 class MovieCard extends Component {
     constructor(props) {
         super(props)
+        this.onPressMovie = this.onPressMovie.bind(this)
     }
-    // onPressMovie () {
-    //     this.props.navigation.
-    //     console.log('pressed')
-    // }
+    onPressMovie () {
+        this.props.navigation.navigate('DetailMovie',{movie:this.props.movie.slug});
+    }
     render() {
-        const logo = this.props.movie.image
         return (
-            <TouchableOpacity onPress={() => {
-                this.props.navigation.navigate('DetailMovie',{movie:this.props.movie.slug});
-              }} style={styles.movieCardHolder}>
-                <Image source={logo} style={styles.movieCard} />
+            <TouchableOpacity onPress={this.onPressMovie} style={styles.movieCardHolder}>
+                <Image source={{uri: this.props.movie.image}} style={styles.movieCard} />
             </TouchableOpacity>
         );
     }
@@ -24,19 +21,18 @@ class MovieCard extends Component {
 
 const styles = StyleSheet.create({
     movieCard: {
-        width: '130px',
-        height: '200px',
-        borderRadius: '10px'
+        width: 200,
+        height: 300,
+        borderRadius: 10
     },
     movieCardHolder: {
         flex: 0.5,
-        borderRadius: '10px',
-        shadowColor: '#000',
+        borderRadius: 10,
+        shadowColor: '#000000',
         shadowOpacity: 0.3,
         shadowRadius: 10,
         shadowOffset: { width: 0, height: 0 },
-        margin: 5,
-        height: 'fit-content'
+        margin: 5
     }
 })
 

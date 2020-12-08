@@ -1,88 +1,96 @@
 import React, { Component } from 'react';
-import { StyleSheet, View, Text, Image, ScrollView, TouchableOpacity } from 'react-native';
+import { StyleSheet, View, Text, Image, ScrollView, TouchableOpacity, Dimensions, StatusBar } from 'react-native';
 import TomatoesImage from '../assets/RottenTomatoes.png'
 import StarImage from '../assets/Star.png'
 import Tabs from '../components/Tabs'
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome'
 import { faChevronLeft, faShoppingCart } from '@fortawesome/free-solid-svg-icons'
 import { withNavigation } from 'react-navigation'
-import YoutubePlayer from 'react-native-youtube-iframe';
+import YoutubePlayer from 'react-native-youtube-iframe'
+import HTMLView from 'react-native-htmlview'
+import DOMAIN from '../domain'
+import { LinearGradient } from 'expo-linear-gradient';
 
 class DetailMovie extends Component {
     constructor(props) {
         super(props)
-        this.state = { movie: [], movietimes: [], times: [], chosenDate: [], chosenTime: "", playing: true }
-        // this.updateTime = this.updateTime.bind(this)
+        this.state = { movie: [], playing: true }
+        this.onClickMuaVe = this.onClickMuaVe.bind(this)
     }
     componentDidMount() {
-        fetch(`http://localhost:3000/movie/${this.props.navigation.state.params.movie}`)
+        fetch(`${DOMAIN.api}/movie/${this.props.navigation.state.params.movie}`)
             .then(response => response.json())
             .then(data => {
-                fetch(`http://localhost:3000/movietime/${data._id}`)
+                fetch(`${DOMAIN.api}/movietime/${data._id}`)
                     .then(response => response.json())
                     .then(res => {
                         this.setState({ movie: data, movietimes: res, times: res, chosenDate: res })
                     })
             })
     }
+    onClickMuaVe() {
+        this.props.navigation.navigate('SeatScreen', {movie: this.state.movie, slug: this.props.navigation.state.params.movie})
+    }
     render() {
         let startDate
         if (!this.state.movie.date)
             startDate = new Date(this.state.movie.date_start)
         else startDate = new Date(this.state.movie.date.date_start)
+        let trailer = new String(this.state.movie.trailer)
+        trailer = trailer.slice(trailer.search('embed/')+6).slice(0,trailer.slice(trailer.search('embed/')+6).search('"'))
+        let description = this.state.movie.decription
+        // description = new DOMParser().parseFromString(description,'text/html')
         return (
             <View style={{
-                height: '100%',
-                width: "100%",
-                backgroundColor: 'white',
+                height: Dimensions.get('window').height,
+                width: Dimensions.get('window').width,
+                backgroundColor: '#ffffff',
                 fontFamily: 'UTMAvo'
             }}>
                 <ScrollView style={{
-                    height: innerHeight - 100,
-                    width: "100%",
-                    backgroundColor: 'white',
+                    height: Dimensions.get('window').height - 100,
+                    width: Dimensions.get('window').width,
+                    backgroundColor: '#ffffff',
                     fontFamily: 'UTMAvo'
                 }}>
                     <View style={{
-                        width: '100%',
-                        height: '400px',
-                        borderRadius: '10px',
-                        background: `linear-gradient(to bottom, transparent, transparent, white),center/cover url('${this.state.movie.image}') no-repeat`,
+                        width: Dimensions.get('window').width,
+                        height: Dimensions.get('window').width,
+                        borderRadius: 10,
                     }}>
-                        <FontAwesomeIcon color="white" size={30} style={{ padding: '10px' }} icon={faChevronLeft} onClick={() => this.props.navigation.goBack()} />
+                        <FontAwesomeIcon color="white" size={30} style={{ marginTop: StatusBar.currentHeight+10, marginLeft: 10, zIndex: 2, position: 'absolute' }} icon={faChevronLeft} onPress={() => this.props.navigation.goBack()} />
+                        <LinearGradient colors={['transparent', 'white']} style={{ position: 'absolute', marginTop: Dimensions.get('window').width-200, height: 200, width: Dimensions.get('window').width, zIndex: 3}}></LinearGradient>
+                        <Image style={{width: Dimensions.get('window').width, height: Dimensions.get('window').width, zIndex: 0}} source={{uri: this.state.movie.image}} />
                     </View>
                     <View>
                         <Text style={styles.headText}>{this.state.movie.name}</Text>
                         <Text style={styles.typeText}>{this.state.movie.type}</Text>
-                        <View style={{ flexDirection: 'row', width: '100%', fontSize: '24px', fontWeight: 'bold', fontFamily: 'UTMAvoBold', paddingLeft: '20px' }}>
-                            <Image style={{ height: '30px', width: '98px', marginRight: '15px' }} source={TomatoesImage} />
-                            {this.state.movie.rating}/5
-                            <Image style={{ height: '30px', width: '30px' }} source={StarImage} />
+                        <View style={{ flexDirection: 'row', width: Dimensions.get('window').width, paddingLeft: 20 }}>
+                            <Image style={{ height: 30, width: 98, marginRight: 15 }} source={TomatoesImage} />
+                            <Text style={{fontSize: 24, fontWeight: 'bold', fontFamily: 'UTMAvoBold',}}>{this.state.movie.rating}/5</Text>
+                            <Image style={{ height: 30, width: 30 }} source={StarImage} />
                         </View>
-                        <Text style={{ fontWeight: 'bold', paddingLeft: '20px' }}>Diễn viên: </Text>
-                        <Text style={{ paddingLeft: '20px' }}>{this.state.movie.actor}</Text>
-                        <Text style={{ paddingLeft: '20px' }}><Text style={styles.boldText}>Ngày khởi chiếu: </Text>{`${startDate.getDate()}/${startDate.getMonth() + 1}/${startDate.getFullYear()}`}</Text>
+                        <Text style={{ fontWeight: 'bold', paddingLeft: 20 }}>Diễn viên: </Text>
+                        <Text style={{ paddingLeft: 20 }}>{this.state.movie.actor}</Text>
+                        <Text style={{ paddingLeft: 20 }}><Text style={styles.boldText}>Ngày khởi chiếu: </Text>{`${startDate.getDate()}/${startDate.getMonth() + 1}/${startDate.getFullYear()}`}</Text>
                         <View style={{
                             display: 'flex',
                             justifyContent: 'center',
                             alignItems: 'center',
-                            marginTop: '12px'
+                            marginTop: 12
                         }}>
-                            <TouchableOpacity style={styles.buttonMuaVe} onClick={this.onClickMuaVe}>
-                                <FontAwesomeIcon color="white" size={30} style={{ paddingHorizontal: '10px' }} icon={faShoppingCart} /> MUA VÉ
+                            <TouchableOpacity style={styles.buttonMuaVe} onPress={this.onClickMuaVe}>
+                                <FontAwesomeIcon color="white" size={30} style={{ marginRight: 10, marginTop: 5 }} icon={faShoppingCart} /> 
+                                <Text style={styles.textMuaVe}>MUA VÉ</Text>
                             </TouchableOpacity>
                         </View>
                     </View>
                     <View>
                         <YoutubePlayer
-                        height={300}
-                        width={400}
-                        videoId={"jzD_yyEcp0M"}
+                        height={Dimensions.get('window').width/16*10}
+                        width={Dimensions.get('window').width}
+                        videoId={trailer}
                         play={this.state.playing}
-                        onChangeState={event => console.log(event)}
-                        onReady={() => console.log("ready")}
-                        onError={e => console.log(e)}
-                        onPlaybackQualityChange={q => console.log(q)}
                         volume={50}
                         playbackRate={1}
                         initialPlayerParams={{
@@ -90,6 +98,12 @@ class DetailMovie extends Component {
                             showClosedCaptions: true
                         }}
                         />
+                    </View>
+                    <View>
+                        <Text style={styles.headText}>Nội dung phim</Text>
+                        <Text style={{ paddingLeft: 20 }}>
+                            <HTMLView value={description} style={{width:Dimensions.get('window').width, paddingRight: 30}} />
+                        </Text>
                     </View>
                 </ScrollView>
                 <Tabs />
@@ -99,43 +113,35 @@ class DetailMovie extends Component {
 }
 
 const styles = StyleSheet.create({
-    movieCardHolder: {
-        flex: 0.5,
-        borderRadius: '10px',
-        shadowColor: '#000',
-        shadowOpacity: 0.3,
-        shadowRadius: 10,
-        shadowOffset: { width: 0, height: 0 },
-        margin: 5,
-        height: 'fit-content'
-    },
     boldText: {
         fontWeight: 'bold'
     },
     typeText: {
         color: 'gray',
-        paddingLeft: '20px',
-        maxHeight: '20px'
+        paddingLeft: 20,
+        maxHeight: 20
     },
     headText: {
         fontFamily: 'UTMAvoBold',
-        width: '100%',
-        paddingLeft: '20px',
-        fontSize: '25px',
-        lineHeight: '27px',
+        width: Dimensions.get('window').width,
+        paddingLeft: 20,
+        fontSize: 25,
+        lineHeight: 38,
         color: "rgb(255,215,70)"
     },
     buttonMuaVe: {
-        fontFamily: 'UTMAvoBold',
-        color: "white",
-        fontSize: '26px',
         backgroundColor: "rgb(255, 215, 70)",
         flexDirection: 'row',
-        paddingLeft: '20px',
-        paddingRight: '30px',
-        paddingVertical: '8px',
-        width: 'fit-content',
-        borderRadius: '30px'
+        paddingLeft: 20,
+        paddingRight: 30,
+        paddingVertical: 8,
+        borderRadius: 30,
+        marginBottom: 20
+    },
+    textMuaVe: {
+        fontFamily: 'UTMAvoBold',
+        color: 'white',
+        fontSize: 26,
     }
 });
 
