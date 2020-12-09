@@ -10,7 +10,7 @@ class EventSlideshow extends Component {
    
       this.state = {
         position: 1,
-        interval: null,
+        interval: 5000,
         dataSource: [
           {
             title: '',
@@ -35,12 +35,12 @@ class EventSlideshow extends Component {
           .then(data => {
             this.setState({events:data})
             data=data.slice(0,4).map(e => {
-                if(e.image.indexOf('http')==-1) {
-                  e.image=(`${DOMAIN.api}/`+e.image).replace('\\','/')
+                if(e.cover_image.indexOf('http')==-1) {
+                  e.cover_image=(`${DOMAIN.api}/`+e.cover_image).replace('\\','/')
                 }
                 return({
-                    title: e.name,
-                    url: e.image
+                    title: "",
+                    url: e.cover_image
                 })
             })
             this.setState({dataSource:data})

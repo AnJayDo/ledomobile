@@ -1,11 +1,10 @@
 {
   "expo": {
-    "name": "Lê Độ Cinema",
+    "name": "ledomobile",
     "slug": "ledomobile",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/ledoicon.png",
-    "sdkVersion": "39.0.0",
     "splash": {
       "image": "./assets/splash.png",
       "resizeMode": "contain",
@@ -17,14 +16,18 @@
     "assetBundlePatterns": [
       "**/*"
     ],
+    "ios": {
+      "supportsTablet": true
+    },
     "android": {
-      "package":"com.ledocinema.ledocinema",
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#FFFFFF"
-      },        
-      "versionCode":1
+      }
     },
-    "description": "Đây là app Rạp Lê Độ.",
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "description": ""
   }
 }

@@ -11,18 +11,22 @@ import DOMAIN from '../domain'
 class DetailEvent extends Component {
     constructor(props) {
         super(props)
-        this.state = {event: {}}
+        this.state = {event: {image: ""}}
     }
     componentDidMount() {
         fetch(`${DOMAIN.api}/event/${this.props.navigation.state.params.event}`)
             .then(response => response.json())
-            .then(data => {
+            .then(data => {                
                 this.setState({event: data})
             })
     }
     render() {
         let startDate
         let endDate
+        let cover = this.state.event.cover_image?this.state.event.cover_image:this.state.event.image
+        if (cover.indexOf('http') == -1) {
+            cover = (`${DOMAIN.api}/` + cover).replace('\\', '/')
+        }
         if (!this.state.event.date) {
             startDate = new Date(this.state.event.date_start)
             endDate = new Date(this.state.event.date_end)
@@ -52,7 +56,7 @@ class DetailEvent extends Component {
                     }}>
                         <FontAwesomeIcon color="white" size={30} style={{ marginTop: StatusBar.currentHeight+10, marginLeft: 10, zIndex: 2, position: 'absolute' }} icon={faChevronLeft} onPress={() => this.props.navigation.goBack()} />
                         <LinearGradient colors={['transparent', 'white']} style={{ position: 'absolute', marginTop: Dimensions.get('window').width/16*9-200, height: 200, width: Dimensions.get('window').width, zIndex: 3}}></LinearGradient>
-                        <Image style={{width: Dimensions.get('window').width, height: Dimensions.get('window').width/16*9, zIndex: 0}} source={{uri: this.state.event.image}} />
+                        <Image style={{width: Dimensions.get('window').width, height: Dimensions.get('window').width/16*9, zIndex: 0}} source={{uri: cover}} />
                     </View>
                     <View>
                         <Text style={styles.headText}>{this.state.event.name}</Text>
@@ -68,7 +72,7 @@ class DetailEvent extends Component {
                 </ScrollView>
                 <Tabs />
             </View>
-        );
+        )
     }
 }
 

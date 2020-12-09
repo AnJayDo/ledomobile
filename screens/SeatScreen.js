@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import { StyleSheet, View, Text, Image, ScrollView, TouchableOpacity, Dimensions, StatusBar, ImageBackground } from 'react-native';
+import { StyleSheet, View, Text, Image, ScrollView, TouchableOpacity, Dimensions, StatusBar, ImageBackground, Alert } from 'react-native';
 import Tabs from '../components/Tabs'
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome'
 import { faChevronLeft, faShoppingCart } from '@fortawesome/free-solid-svg-icons'
@@ -16,17 +16,26 @@ const getData = async () => {
     try {
       const value = await AsyncStorage.getItem('jwt')
       if(value !== null) {
+          return(value)
       }
-      return("")
+      return("none")
     } catch(e) {
       // error reading value
     }
 }
 
+const storeData = async (value) => {
+    try {
+      await AsyncStorage.setItem('jwt', value)
+      return(value)
+    } catch (e) {
+      // saving error
+    }
+  }
+
 class SeatScreen extends Component {
     constructor(props) {
-        super(props)       
-        let jwt = getData()
+        super(props)    
         let suatchieu = []
         let today = new Date()
         suatchieu.push(today)
@@ -37,11 +46,15 @@ class SeatScreen extends Component {
         }
         suatchieu=suatchieu.map(day => {return({date: day, active: false })})
         suatchieu[0].active=true
-        this.state = { movie: [], times: [], suatchieu: suatchieu, chosenDate: [], chosenDateID: (new Date()).toLocaleDateString(), chosenTime: "", price: 30000,seats: [], chosenSeats: [], token: jwt }
+        this.state = { movie: {}, times: [], suatchieu: suatchieu, chosenDate: [], chosenDateID: (new Date()).toLocaleDateString(), chosenTime: "", price: 30000,seats: [], chosenSeats: [], token: ""}
+        getData().then(res => {
+            this.setState({token: res})
+        })
         this.updateTime = this.updateTime.bind(this)
         this.updateGio = this.updateGio.bind(this)
         this.chooseSeat = this.chooseSeat.bind(this)
         this.unchooseSeat = this.unchooseSeat.bind(this)
+        this.onClickThanhToan = this.onClickThanhToan.bind(this)
     }
     componentDidMount() {
         fetch(`${DOMAIN.api}/movie/${this.props.navigation.state.params.slug}`)
@@ -55,13 +68,15 @@ class SeatScreen extends Component {
                             mvt.active = false
                             return(mvt)
                         })
-                        giochieu[0].active=true
-                        let seats = giochieu[0].movietime.seat.map(row => row.map(column => {
-                            if(column.available==false)
-                                column.active=false
-                            return(column)
-                        }))
-                        this.setState({ movie: data, times: res, chosenDate: giochieu, chosenTime: giochieu[0]._id, price: giochieu[0].movietime.price,seats: seats })
+                        if(giochieu.length>0) {
+                            giochieu[0].active=true
+                            let seats = giochieu[0].movietime.seat.map(row => row.map(column => {
+                                if(column.available==false)
+                                    column.active=false
+                                return(column)
+                            }))
+                            this.setState({ movie: data, times: res, chosenDate: giochieu, chosenTime: giochieu[0]._id, price: giochieu[0].movietime.price,seats: seats })
+                        } else this.setState({ movie: data, times: res, chosenDate: giochieu, })
                     })
             })
     }
@@ -83,7 +98,7 @@ class SeatScreen extends Component {
                     column.active=false
                 return(column)
             }))
-            this.setState({chosenDate: giochieu, seats: giochieu[0].movietime.seat, price: giochieu[0].movietime.price, seats: seats,chosenSeats: []})
+            this.setState({chosenDate: giochieu, chosenTime: giochieu[0]._id,seats: giochieu[0].movietime.seat, price: giochieu[0].movietime.price, seats: seats,chosenSeats: []})
         }
     }
     updateGio(key) {
@@ -120,10 +135,36 @@ class SeatScreen extends Component {
         this.setState({seats: seats, chosenSeats: chosenSeats})
     }
     onClickThanhToan() {
-        console.log(this.state.token)
-        if(!this.state.token) {
-            console.log('Pressed')
-        } else this.props.navigation.navigate('UserScreen')
+        if(this.state.chosenSeats.length==0) {
+            Alert.alert("Chọn ghế", "Bạn vẫn chưa chọn ghế. Hãy chọn ghế trước khi thanh toán.",
+            [
+              {
+                text: "OK",
+                style: "cancel"
+              },
+            ],
+            { cancelable: true })
+        } else {
+            if(this.state.token!=="none") {
+                const data = {numberticket: this.state.chosenSeats.length, seat: JSON.stringify(this.state.chosenSeats)}
+                fetch(`${DOMAIN.api}/ticket/${this.state.chosenTime}/create`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'auth-token': this.state.token
+                    },
+                    body: JSON.stringify(data)
+                }).then(res => res.json()).then(data => {
+                    if (data._id) {
+                        this.props.navigation.navigate('PaymentScreen',{seats: this.state.chosenSeats, ticketID:data._id, movie: this.state.movie, price: this.state.price})
+                    }
+                }).catch(e => {
+                    console.log(e)
+                    // storeData('none').then(res => this.setState({token: res}))
+                    // this.props.navigation.navigate('UserScreen', {movie: this.state.movie, seats: this.state.chosenSeats, movietime: this.state.chosenTime, price: this.state.price})
+                })
+            } else this.props.navigation.navigate('UserScreen', {movie: this.state.movie, seats: this.state.chosenSeats, movietime: this.state.chosenTime, price: this.state.price})
+        }
     }
     render() {
         let suatchieu = this.state.suatchieu
@@ -158,18 +199,18 @@ class SeatScreen extends Component {
                     return (
                         <TouchableOpacity onPress={() => this.unchooseSeat(column.id)}>
                             <ImageBackground source={chosenSeat} style={styles.seatContainer}>
-                                <Text style={{fontFamily: 'UTMAvoBold', color: 'white', fontSize: Dimensions.get('window').width/34, textAlign: "center", paddingBottom: '20%'}}>{column.id}</Text>
+                                <Text style={{fontFamily: 'UTMAvoBold', color: 'white', fontSize: Dimensions.get('window').width/40, textAlign: "center", paddingBottom: '20%'}}>{column.id}</Text>
                             </ImageBackground>
                         </TouchableOpacity>)
                     else
                     return (
                         <TouchableOpacity  onPress={() => this.chooseSeat(column.id)}>
                             <ImageBackground source={seatAvailable} style={styles.seatContainer}>
-                                <Text style={{fontFamily: 'UTMAvoBold', color: 'white', fontSize: Dimensions.get('window').width/34, textAlign: "center", paddingBottom: '20%'}}>{column.id}</Text>
+                                <Text style={{fontFamily: 'UTMAvoBold', color: 'white', fontSize: Dimensions.get('window').width/40, textAlign: "center", paddingBottom: '20%'}}>{column.id}</Text>
                             </ImageBackground>
                         </TouchableOpacity>)
                 }
-                else return (<ImageBackground source={seatUnavailable} style={styles.seatContainer}><Text className="seatUnavailable">{column.id}</Text></ImageBackground>)
+                else return (<ImageBackground source={seatUnavailable} style={styles.seatContainer}><Text style={{fontFamily: 'UTMAvoBold', color: 'white', fontSize: Dimensions.get('window').width/40, textAlign: "center", paddingBottom: '20%'}}>{column.id}</Text></ImageBackground>)
             })}</ScrollView>)
         return (
             <View style={{
@@ -218,8 +259,8 @@ class SeatScreen extends Component {
                             <Text style={{ paddingLeft: 20 }}>{this.state.movie.actor}</Text>
                             <Text style={{ fontWeight: 'bold', paddingLeft: 20 }}>Vé đã chọn: </Text>
                             <Text style={{ paddingLeft: 20 }}>{this.state.chosenSeats.toString()}</Text>
-                            <Text style={{ fontWeight: 'bold', paddingLeft: 20 }}>Đơn giá: {this.state.price}</Text>
-                            <Text style={{ fontWeight: 'bold', paddingLeft: 20 }}>Tổng: {this.state.price*this.state.chosenSeats.length}</Text>
+                            <Text style={{ fontWeight: 'bold', paddingLeft: 20 }}>Đơn giá: {this.state.price}đ</Text>
+                            <Text style={{ fontWeight: 'bold', paddingLeft: 20 }}>Tổng: {this.state.price*this.state.chosenSeats.length}đ</Text>
                             <View style={{
                                 width: Dimensions.get('window').width*0.7,
                                 alignItems: 'flex-end',

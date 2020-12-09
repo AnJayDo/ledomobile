@@ -5,6 +5,9 @@ import DetailMovie from '../screens/DetailMovie'
 import DetailEvent from '../screens/DetailEvent'
 import SeatScreen from '../screens/SeatScreen'
 import UserScreen from '../screens/UserScreen'
+import PaymentScreen from '../screens/PaymentScreen'
+import MomoPayment from '../screens/MomoPayment'
+import Events from '../screens/Events'
 
 const stackNavigationOptions = {
     headerShown: false
@@ -15,6 +18,12 @@ const AppNavigator = createStackNavigator({
         screen: Home,
         navigationOptions: ({ navigation }) => ({
             title: `Home`,
+        })
+    },
+    Events: {
+        screen: Events,
+        navigationOptions: ({ navigation }) => ({
+            title: `Events`,
         })
     },
     DetailMovie: {
@@ -39,6 +48,18 @@ const AppNavigator = createStackNavigator({
         screen: UserScreen,
         navigationOptions: ({ navigation }) => ({
             title: `User Screen`,
+        })
+    },
+    PaymentScreen: {
+        screen: PaymentScreen,
+        navigationOptions: ({ navigation }) => ({
+            title: `Payment Screen`,
+        })
+    },
+    MomoPayment: {
+        screen: MomoPayment,
+        navigationOptions: ({ navigation }) => ({
+            title: `Momo Payment`,
         })
     }
 },
